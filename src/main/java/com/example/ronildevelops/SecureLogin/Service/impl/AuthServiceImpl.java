@@ -1,13 +1,15 @@
 package com.example.ronildevelops.SecureLogin.Service.impl;
 
-import com.example.ronildevelops.SecureLogin.Entity.ROLE;
-import com.example.ronildevelops.SecureLogin.Entity.UserEntity;
-import com.example.ronildevelops.SecureLogin.Repository.UserEntityRepository;
 import com.example.ronildevelops.SecureLogin.DTO.AuthResponse;
 import com.example.ronildevelops.SecureLogin.DTO.LoginRequest;
 import com.example.ronildevelops.SecureLogin.DTO.RegisterRequest;
+import com.example.ronildevelops.SecureLogin.Entity.ROLE;
+import com.example.ronildevelops.SecureLogin.Entity.UserEntity;
+import com.example.ronildevelops.SecureLogin.Repository.UserEntityRepository;
 import com.example.ronildevelops.SecureLogin.Security.JwtUtil;
 import com.example.ronildevelops.SecureLogin.Service.AuthService;
+import com.example.ronildevelops.SecureLogin.exception.DuplicateResourceException;
+import com.example.ronildevelops.SecureLogin.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -26,8 +28,9 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public AuthResponse register(RegisterRequest request) {
 
+        // ✅ FIXED: use custom exception instead of RuntimeException
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already registered");
+            throw new DuplicateResourceException("Email already registered");
         }
 
         UserEntity user = UserEntity.builder()
@@ -59,7 +62,8 @@ public class AuthServiceImpl implements AuthService {
         );
 
         UserEntity user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("User not found"));
 
         String token = jwtUtil.generateToken(user.getEmail());
 

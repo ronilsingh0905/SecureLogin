@@ -1,13 +1,15 @@
 package com.example.ronildevelops.SecureLogin.Service.impl;
 
+import com.example.ronildevelops.SecureLogin.DTO.TaskRequest;
+import com.example.ronildevelops.SecureLogin.DTO.TaskResponse;
 import com.example.ronildevelops.SecureLogin.Entity.TaskEntity;
 import com.example.ronildevelops.SecureLogin.Entity.TaskStatus;
 import com.example.ronildevelops.SecureLogin.Entity.UserEntity;
 import com.example.ronildevelops.SecureLogin.Repository.TaskEntityRepository;
 import com.example.ronildevelops.SecureLogin.Repository.UserEntityRepository;
-import com.example.ronildevelops.SecureLogin.DTO.TaskRequest;
-import com.example.ronildevelops.SecureLogin.DTO.TaskResponse;
 import com.example.ronildevelops.SecureLogin.Service.TaskService;
+import com.example.ronildevelops.SecureLogin.exception.AccessDeniedException;
+import com.example.ronildevelops.SecureLogin.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -30,7 +32,7 @@ public class TaskServiceImpl implements TaskService {
         String email = authentication.getName();
 
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
     }
 
     @Override
@@ -68,9 +70,15 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public TaskResponse getTaskById(Long id) {
 
+        UserEntity user = getCurrentUser();
+
         TaskEntity task = taskRepository.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("Task not found"));
+                        new ResourceNotFoundException("Task not found"));
+
+        if (!task.getCreatedBy().getId().equals(user.getId())) {
+            throw new AccessDeniedException("You are not allowed to access this task");
+        }
 
         return mapToResponse(task);
     }
@@ -78,9 +86,15 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public TaskResponse updateTask(Long id, TaskRequest request) {
 
+        UserEntity user = getCurrentUser();
+
         TaskEntity task = taskRepository.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("Task not found"));
+                        new ResourceNotFoundException("Task not found"));
+
+        if (!task.getCreatedBy().getId().equals(user.getId())) {
+            throw new AccessDeniedException("You are not allowed to update this task");
+        }
 
         task.setTitle(request.getTitle());
         task.setDescription(request.getDescription());
@@ -97,7 +111,17 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public void deleteTask(Long id) {
 
-        taskRepository.deleteById(id);
+        UserEntity user = getCurrentUser();
+
+        TaskEntity task = taskRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Task not found"));
+
+        if (!task.getCreatedBy().getId().equals(user.getId())) {
+            throw new AccessDeniedException("You are not allowed to delete this task");
+        }
+
+        taskRepository.delete(task);
     }
 
     private TaskResponse mapToResponse(TaskEntity task) {
