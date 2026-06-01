@@ -1,5 +1,6 @@
 package com.example.ronildevelops.SecureLogin.DTO;
 
+import com.example.ronildevelops.SecureLogin.Entity.TaskStatus;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
@@ -10,4 +11,6 @@ public class TaskRequest {
     private String title;
 
     private String description;
+    private TaskStatus status;
+
 }
