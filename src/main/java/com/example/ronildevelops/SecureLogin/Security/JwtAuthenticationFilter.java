@@ -67,5 +67,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+
+        System.out.println("=== JWT FILTER HIT ===");
+        System.out.println("AUTH HEADER: " + authHeader);
+        System.out.println("TOKEN: " + token);
+        System.out.println("EMAIL: " + email);
     }
 }
