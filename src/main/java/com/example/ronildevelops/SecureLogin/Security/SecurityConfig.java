@@ -64,4 +64,9 @@ public class SecurityConfig {
 
         return source;
     }
+
+    @Bean
+    public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
+        return http.getSharedObject(AuthenticationManager.class);
+    }
 }
